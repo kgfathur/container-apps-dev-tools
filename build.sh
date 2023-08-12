@@ -213,11 +213,11 @@ if [ -f ${BUILD_ENV} ]; then
         fi
       done
 else
-    cat ${root_dir}/usage.txt
+    cat ${root_dir}/usage.md
     echo ""
     echo "- - - - - - - - - - - - - - - - - - -"
     echo "Generating sample... '.build-env'"
-    cat ${root_dir}/usage.txt | grep "=" > .build-env
+    cat ${root_dir}/usage.md | grep "=" > .build-env
 fi
 
 echo 'Finish'
