@@ -1,0 +1,11 @@
+## Need environtment variable file
+Please create file: .build-env
+
+With following environtment variable:
+SOURCE_IMAGE=ubuntu
+SOURCE_TAG=jammy
+BUILD_NAME=
+BUILD_TAG=
+BUILD_REPO=docker.io/sample,quay.io/sample
+BUILD_LATEST=True
+PUSH_IMAGE=True

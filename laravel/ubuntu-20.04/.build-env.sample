@@ -1,0 +1,4 @@
+#!/bin/bash
+# she-bang above are optional
+# but nice to have for syntax highlight
+SOURCE_TAG=ubuntu-20.04

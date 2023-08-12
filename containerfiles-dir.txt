@@ -1,0 +1,3 @@
+laravel
+nginx
+nginx-php-fpm
