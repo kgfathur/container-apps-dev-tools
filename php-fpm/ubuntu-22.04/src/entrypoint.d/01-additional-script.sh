@@ -8,3 +8,7 @@ cat /etc/os-release
 
 echo -e "\n## -- NGINX Version"
 nginx -V
+
+echo "$(date +'%Y-%m-%d %H:%M:%S.%3N') | Running: php-fpm -D"
+php-fpm -D
+echo "$(date +'%Y-%m-%d %H:%M:%S.%3N') | After: php-fpm -D"

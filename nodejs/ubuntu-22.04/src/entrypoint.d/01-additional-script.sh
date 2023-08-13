@@ -6,5 +6,5 @@
 echo -e "\n## -- OS Info"
 cat /etc/os-release
 
-echo -e "\n## -- NGINX Version"
-nginx -V
+echo -e "\n## -- NodeJS Version"
+node -v

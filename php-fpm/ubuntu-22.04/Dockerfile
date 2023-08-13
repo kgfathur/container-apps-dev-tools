@@ -1,13 +1,13 @@
 ARG SOURCE_IMAGE
 FROM ${SOURCE_IMAGE}
 
-ENV NAME=nginx-php-fpm \
+ENV NAME=php-fpm \
   NGINX_VERSION=1.22 \
-  PHP_VERSION=7.4 \
+  PHP_VERSION=8.1 \
   OS_NAME=ubuntu \
-  OS_VERSION=20.04 \
-  OS_CODENAME=focal \
-  OS_FULLNAME='Focal Fossa'
+  OS_VERSION=22.04 \
+  OS_CODENAME=jammy \
+  OS_FULLNAME='Jammy Jellyfish'
 
 ENV SUMMARY="NGINX ${NGINX_VERSION} image with rootless priviledge based on ${OS_NAME} ${OS_VERSION} (${OS_FULLNAME})" \
   DESCRIPTION="NGINX is a web server and a reverse proxy server for HTTP, SMTP, POP3 and IMAP \

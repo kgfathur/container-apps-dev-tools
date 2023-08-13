@@ -6,11 +6,49 @@ container_cmd=""
 # [ true | false ]
 env_check=""
 
+function containerfile_find() {
+  local containerfiles_dir_txt="$1"
+  local containerfiles_filter_txt="$2"
+  containerfile_filter ${containerfiles_filter_txt}
+
+  echo -n "containerfiles_dir_txt         : ${containerfiles_dir_txt} >> "
+  if [[ -z ${containerfiles_dir_txt} || ! -f ${containerfiles_dir_txt} ]]; then
+    echo "EMPTY or NOT Exist, find all available 'Dockerfile'"
+    allow_list="*"
+  else
+    echo "FOUND"
+    allow_list="^($(cat ${containerfiles_dir_txt} | sed '/^$/d; :a; N; $!ba; s/\n/|/g; s/|$//g;'))\/"
+  fi
+  echo "allow_list: \"${allow_list}\"";
+  echo "filter_list: \"${filter_list}\"";
+  container_files=$(
+    find * -name Dockerfile -type f | \
+    grep -E "${allow_list}" | \
+    ${filter_cmd} "${filter_list}" |  \
+    grep -E '^[^/]*\/[^/]*\/[^/]*$' | sort -u)
+}
+
+function containerfile_filter() {
+  local containerfiles_filter_txt="$1"
+  echo "containerfiles_filter_txt args : ${containerfiles_filter_txt}"
+  [[ -z ${containerfiles_filter_txt} || ! -f ${containerfiles_filter_txt} ]] && containerfiles_filter_txt="${root_dir}/containerfiles-filter.txt"
+  echo -n "containerfiles_filter_txt      : ${containerfiles_filter_txt} >> "
+  if [[ -f ${containerfiles_filter_txt} && $(cat ${containerfiles_filter_txt} | wc -w) -gt 0 ]]; then
+    filter_list="^($(cat ${containerfiles_filter_txt} | sed '/^$/d; :a; N; $!ba; s/\n/|/g; s/|$//g;'))\/"
+    filter_cmd="grep -vE"
+    echo "FOUND"
+  else
+    filter_list="*"
+    filter_cmd="grep -E"
+    echo "EMPTY or NOT Exist"
+  fi
+}
+
 function check_env() {
   local result_found error_count=0 error_files="" filename_space="";
   [[ -z ${env_check} ]] && env_check=true;
   if [[ "$(tr '[:upper:]' '[:lower:]' <<<$env_check)" == "true" ]]; then
-    for f in $(find . -name *build-env | sort | sed 's|^\./||g'); do
+    for f in $(find . -name .build-env -type f | sed 's|^\./||g' | grep -E "(^.build-env)|(${allow_list})" | ${filter_cmd} "${filter_list}" | sort); do
       echo -n "Checking ENV: ${root_dir}/$f ";
       cat ${root_dir}/$f | \
         grep -nE "(^[^a-zA-Z_# ])|(['\"]+)|(^[a-zA-Z\_ ]+[a-zA-Z0-9\!-<>-$]*$)|(^[a-zA-Z\_]+[a-zA-Z0-9\!-<>-]*[ ]+)" | \
@@ -141,6 +179,11 @@ function image_build() {
   else
     echo "ARGS: ${build_image_arg} (NO args)"
   fi
+  
+  if [[ ! -z ${BUILD_IMAGE_OPTS} ]]; then
+    build_image_arg="${BUILD_IMAGE_OPTS} ${build_image_arg}"
+    echo "OPTS: ${BUILD_IMAGE_OPTS}"
+  fi
 
   build_image_cmd="${container_cmd} build ${build_image_arg} -t ${build_image_tag} ${build_context_dir}"
   echo "Building image: ${build_image_tag}"
@@ -152,7 +195,7 @@ function image_build() {
   env_push=$(tr '[:upper:]' '[:lower:]' <<<$PUSH_IMAGE)
 
   BUILD_NAME="${main_dir}"
-  BUILD_TAG="${subdir}"
+  BUILD_TAG="${sub_dir}"
   for repo in $repo_list; do
     echo ""
     image_push_tag "${build_image_tag}" "$repo/$BUILD_NAME:$BUILD_TAG" "${env_push}"
@@ -167,7 +210,28 @@ function image_build() {
 root_dir=${PWD}
 BUILD_ENV="${root_dir}/.build-env"
 if [ -f ${BUILD_ENV} ]; then
+    container_files=""
+    containerfiles_dir_txt_file="${root_dir}/containerfiles-dir.txt"
+    if [[ -f ${containerfiles_dir_txt_file} ]]; then
+      echo "containerfiles_dir             : ${containerfiles_dir_txt_file} file exist!"
+      if [[ $(cat ${containerfiles_dir_txt_file} | wc -w) -gt 0 ]]; then
+        echo "containerfiles_dir             : ${containerfiles_dir_txt_file} file loaded"
+        containerfile_find ${containerfiles_dir_txt_file};
+      else
+        echo "containerfiles_dir             : ${containerfiles_dir_txt_file} file empty!"
+        containerfile_find;
+      fi
+    else
+      echo "containerfiles_dir             : ${containerfiles_dir_txt_file} doesn't exist!"
+      containerfile_find;
+    fi
+    echo "Containerfile:"
+    for cf in ${container_files}; do
+      echo " - ${cf}"
+    done
+
     check_env;
+
     echo -e "Loading BUILD_ENV: ${BUILD_ENV}"
     source_safe "${BUILD_ENV}"
 
@@ -191,27 +255,26 @@ if [ -f ${BUILD_ENV} ]; then
     else
       echo "OK"
     fi
-      set -e
-      for main_dir in $(cat containerfiles-dir.txt); do
-        build_context_parent="${root_dir}/${main_dir}"
-        echo -e "\n# = = = = = = = = = = = = = = = = = = =  = = ="
-        echo -e   " * build_context_parent: ${build_context_parent}"
-        if [[ -d "${build_context_parent}" ]]; then
-          context_subdirs=$(ls ${build_context_parent})
-          for subdir in ${context_subdirs}; do
-            build_context_dir="${build_context_parent}/${subdir}"
-            echo -e "\n> - - - - - - - - - - - - - - - - - - - - - -"
-            echo -e    " - build_context_dir: ${build_context_dir}"
-            ls -lah ${build_context_dir} | tail -n+4
+    set -e
 
-            build_image_tag="${main_dir}:${subdir}"
-            image_build;
+    container_dir=""
+    for cf in ${container_files}; do
+      main_dir=$(echo "$cf" | cut -d'/' -f1)
+      sub_dir=$(echo "$cf" | cut -d'/' -f2)
 
-          done
-        else
-          echo "Skipping ${build_context_parent}, directory does not exist! "
-        fi
-      done
+      build_context_parent="${root_dir}/${main_dir}"
+      build_context_dir="${build_context_parent}/${sub_dir}"
+      if [[ -d "${build_context_parent}" && -d "${build_context_dir}" ]]; then
+        echo -e "\n# = = = = = = = = = = = = = = = = = = =  = = = = ="
+        echo -e   " * build_context_dir: ${build_context_dir}"
+        ls -lah ${build_context_dir} | tail -n+4
+
+        build_image_tag="${main_dir}:${sub_dir}"
+        image_build;
+      else
+        echo "Skipping ${build_context_dir}, directory does not exist! "
+      fi
+    done
 else
     cat ${root_dir}/usage.md
     echo ""

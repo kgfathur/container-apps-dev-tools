@@ -8,3 +8,5 @@ cat /etc/os-release
 
 echo -e "\n## -- NGINX Version"
 nginx -V
+
+php-fpm -D

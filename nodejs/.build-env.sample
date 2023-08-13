@@ -1,4 +1,4 @@
 #!/bin/bash
 # she-bang above are optional
 # but nice to have for syntax highlight#!/bin/bash
-SOURCE_NAME=quay.io/kgfathur/php-fpm
+SOURCE_NAME=ubuntu
