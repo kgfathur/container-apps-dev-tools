@@ -2,7 +2,7 @@
 
 ## About this repo
 
-Find more updated version on [https://github.com/kgfathur/container-apps-dev-tools.git](https://github.com/kgfathur/container-apps-dev-tools.git)
+Find more updated version on [Github](https://github.com/kgfathur/container-apps-dev-tools.git)
 
 ## Todo
 

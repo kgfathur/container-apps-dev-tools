@@ -132,7 +132,7 @@ function image_push_tag() {
 }
 
 function image_build() {
-  local env_parent env_subdir env_all="" env_files="" env_overwrite="";
+  local env_parent env_subdir env_all env_files env_overwrite build_image_arg build_image_argsub;
   env_parent="${build_context_parent}/.build-env"
   env_subdir="${build_context_dir}/.build-env"
   [[ -f $env_parent ]] && env_files="${env_files} ${env_parent}"
@@ -173,16 +173,32 @@ function image_build() {
   done
   echo -e   "### - - - - - - - - - - - - - - - - -\n"
   
+  if [[ ! -z ${BUILD_IMAGE_OPTS} ]]; then
+    build_image_arg="${BUILD_IMAGE_OPTS}"
+    echo "OPTS: ${BUILD_IMAGE_OPTS}"
+  fi
+
   if [[ ! -z ${SOURCE_NAME} && ! -z $SOURCE_TAG} ]]; then
-    build_image_arg="--build-arg SOURCE_IMAGE=${SOURCE_NAME}:${SOURCE_TAG}"
+    build_image_arg="${build_image_arg} --build-arg SOURCE_IMAGE=${SOURCE_NAME}:${SOURCE_TAG}"
     echo "ARGS: ${build_image_arg}"
   else
     echo "ARGS: ${build_image_arg} (NO args)"
   fi
+
+  if [[ -z ${APP_VERSION} ]]; then
+    build_image_tag="${main_dir}:${sub_dir}"
+  else
+    echo "APP_VERSION3: $APP_VERSION"
+    build_image_arg="${build_image_arg} --build-arg APP_VERSION=${APP_VERSION}"
+    build_image_tag="${main_dir}:${APP_VERSION}-${sub_dir}"
+  fi
   
-  if [[ ! -z ${BUILD_IMAGE_OPTS} ]]; then
-    build_image_arg="${BUILD_IMAGE_OPTS} ${build_image_arg}"
-    echo "OPTS: ${BUILD_IMAGE_OPTS}"
+  if [[ ! -z ${BUILD_IMAGE_ARGS} ]]; then
+    build_image_argsub=$(echo "${BUILD_IMAGE_ARGS}" | envsubst)
+    echo "ARGS: ${build_image_argsub}"
+    for args in $(echo ${build_image_argsub}); do
+      build_image_arg="${build_image_arg} --build-arg ${args}"
+    done
   fi
 
   build_image_cmd="${container_cmd} build ${build_image_arg} -t ${build_image_tag} ${build_context_dir}"
@@ -194,14 +210,12 @@ function image_build() {
   env_latest=$(tr '[:upper:]' '[:lower:]' <<<$BUILD_LATEST)
   env_push=$(tr '[:upper:]' '[:lower:]' <<<$PUSH_IMAGE)
 
-  BUILD_NAME="${main_dir}"
-  BUILD_TAG="${sub_dir}"
   for repo in $repo_list; do
     echo ""
-    image_push_tag "${build_image_tag}" "$repo/$BUILD_NAME:$BUILD_TAG" "${env_push}"
+    image_push_tag "${build_image_tag}" "$repo/$build_image_tag" "${env_push}"
     if [ "$env_latest" == "true" ]; then
-      echo -e "\nTAG: mark as latest > $repo/$BUILD_NAME:latest"
-      image_push_tag "${build_image_tag}" "$repo/$BUILD_NAME:latest" "${env_push}"
+      echo -e "\nTAG: mark as latest > $repo/$main_dir:latest"
+      image_push_tag "${build_image_tag}" "$repo/$main_dir:latest" "${env_push}"
     fi
   done
 }
@@ -269,7 +283,6 @@ if [ -f ${BUILD_ENV} ]; then
         echo -e   " * build_context_dir: ${build_context_dir}"
         ls -lah ${build_context_dir} | tail -n+4
 
-        build_image_tag="${main_dir}:${sub_dir}"
         image_build;
       else
         echo "Skipping ${build_context_dir}, directory does not exist! "

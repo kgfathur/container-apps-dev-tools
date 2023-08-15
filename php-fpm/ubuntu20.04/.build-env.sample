@@ -1,0 +1,6 @@
+#!/bin/bash
+# she-bang above are optional
+# but nice to have for syntax highlight
+SOURCE_TAG=focal
+APP_VERSION=7.4
+PHP_VERSION=7.4

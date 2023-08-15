@@ -1,0 +1,6 @@
+#!/bin/bash
+# she-bang above are optional
+# but nice to have for syntax highlight
+SOURCE_TAG=jammy
+APP_VERSION=18
+NODE_VERSION=18

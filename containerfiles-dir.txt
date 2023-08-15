@@ -1,1 +1,2 @@
-nodejs
+laravel
+php-fpm

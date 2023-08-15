@@ -1,0 +1,8 @@
+#!/bin/bash
+# she-bang above are optional
+# but nice to have for syntax highlight
+SOURCE_TAG=jammy
+APP_VERSION=php8.1
+NGINX_VERSION=1.22
+PHP_VERSION=8.1
+NODE_VERSION=18

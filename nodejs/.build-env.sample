@@ -2,3 +2,4 @@
 # she-bang above are optional
 # but nice to have for syntax highlight#!/bin/bash
 SOURCE_NAME=ubuntu
+# BUILD_IMAGE_ARGS="APP_USER=app APP_HOME=/app"
