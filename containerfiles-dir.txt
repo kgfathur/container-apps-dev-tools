@@ -1,3 +1,2 @@
 laravel
-nginx
-nginx-php-fpm
+php-fpm
