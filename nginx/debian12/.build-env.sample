@@ -1,6 +1,6 @@
 #!/bin/bash
 # she-bang above are optional
 # but nice to have for syntax highlight
-SOURCE_NAME=ubuntu
+SOURCE_TAG=focal
+APP_VERSION=1.22
 NGINX_VERSION=1.22
-# BUILD_IMAGE_ARGS="APP_USER=nginx APP_HOME=/etc/nginx  WWW_ROOT=/var/www/html"

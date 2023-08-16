@@ -7,6 +7,7 @@ APP_USER=${APP_USER:-nginx}
 APP_HOME=${APP_HOME:-/usr/share/nginx/html}
 WWW_ROOT=${WWW_ROOT:-/usr/share/nginx/html}
 NGINX_VERSION=${NGINX_VERSION:-1.22}
+OS_DISTRO=$(grep -Po 'ID=\K\w+' /etc/os-release)
 OS_CODENAME=$(grep -Po 'VERSION_CODENAME=\K\w+' /etc/os-release)
 
 echo "Pre-setup file and dir..."
@@ -15,6 +16,7 @@ mkdir -vp /entrypoint.d/ \
           ${APP_HOME} \
           ${WWW_ROOT} \
           /var/run/nginx \
+          /var/cache/nginx \
           /tmp/nginx \
           /run/php \
           /var/log/php
@@ -22,6 +24,19 @@ mkdir -vp /entrypoint.d/ \
 set -e
 cp -vrf /src/entrypoint.sh /entrypoint.sh
 cp -vrf /src/entrypoint.d /
+
+echo "Check User & Group"
+if [[ $(grep -E "(:*:){1,}${APP_UID}:" /etc/passwd) ]]; then
+  echo "USERID exist!"
+  userdel -rf $(grep -E "(:*:){1,}${APP_UID}:" /etc/passwd | cut -d':' -f1)
+fi
+if [[ $(grep -E "^${APP_USER}:" /etc/passwd) ]]; then
+  echo "APP_USER exist!"
+  userdel -rf ${APP_USER}
+fi
+if [[ $(grep -E "^${APP_USER}:" /etc/group) ]]; then
+  echo "GROUP_USER exist!"
+fi
 
 echo "Add User & Group"
 groupadd --gid $APP_GID $APP_USER
@@ -31,7 +46,7 @@ useradd \
   --uid $APP_UID \
   --no-create-home \
   --home ${APP_HOME} \
-  --shell /bin/false \
+  --shell /usr/sbin/nologin \
   $APP_USER
 
 id $APP_USER
@@ -45,8 +60,11 @@ curl -s https://nginx.org/keys/nginx_signing.key | gpg  -v --yes --dearmor -o ${
 gpg --dry-run --quiet --no-keyring --import --import-options import-show ${APT_KEYRING_PATH}
 
 echo "deb [signed-by=${APT_KEYRING_PATH}] \
-http://nginx.org/packages/ubuntu ${OS_CODENAME} nginx" \
+http://nginx.org/packages/${OS_DISTRO} ${OS_CODENAME} nginx" \
   | tee /etc/apt/sources.list.d/nginx.list
+
+echo -e "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" \
+  | tee /etc/apt/preferences.d/99nginx
 
 apt-get update
 
@@ -54,20 +72,20 @@ DEBIAN_FRONTEND=noninteractive TZ=Asia/Jakarta \
   apt-get install -y --no-install-recommends tzdata
 echo "Asia/Jakarta" | tee /etc/timezone
 
-
 DEBIAN_FRONTEND=noninteractive TZ=Asia/Jakarta \
   apt-get install -y --no-install-recommends \
   nginx=${NGINX_VERSION}* \
-  php${PHP_VERSION}-fpm
-  # php${PHP_VERSION}-cli \
-  # php${PHP_VERSION}-curl \
-  # php${PHP_VERSION}-gd \
-  # php${PHP_VERSION}-mbstring \
-  # php${PHP_VERSION}-mysql \
-  # php${PHP_VERSION}-bcmath \
-  # php${PHP_VERSION}-pgsql \
-  # php${PHP_VERSION}-xml \
-  # php${PHP_VERSION}-zip
+  php${PHP_VERSION}-fpm \
+  php${PHP_VERSION}-cli \
+  php${PHP_VERSION}-bcmath \
+  php${PHP_VERSION}-curl \
+  php${PHP_VERSION}-ldap \
+  php${PHP_VERSION}-mbstring \
+  php${PHP_VERSION}-mysql \
+  php${PHP_VERSION}-pgsql \
+  php${PHP_VERSION}-xml \
+  php${PHP_VERSION}-xsl \
+  php${PHP_VERSION}-zip
 
 update-alternatives --install /usr/bin/php-fpm php-fpm /usr/sbin/php-fpm${PHP_VERSION} 0
 

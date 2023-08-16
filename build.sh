@@ -132,7 +132,7 @@ function image_push_tag() {
 }
 
 function image_build() {
-  local env_parent env_subdir env_all env_files env_overwrite build_image_arg build_image_argsub;
+  local env_parent env_subdir env_all env_files env_overwrite build_image_arg build_image_arg_all build_image_argsub;
   env_parent="${build_context_parent}/.build-env"
   env_subdir="${build_context_dir}/.build-env"
   [[ -f $env_parent ]] && env_files="${env_files} ${env_parent}"
@@ -170,14 +170,18 @@ function image_build() {
   echo -e "\n### - - - - - build-env - - - - - - -"
   for e in ${env_all}; do 
     echo "${e}: ${!e}"
+    if [[ "${e}" != "BUILD_IMAGE_OPTS" && "${e}" != "BUILD_IMAGE_ARGS" ]]; then
+      build_image_arg_all="${build_image_arg_all} --build-arg ${e}=${!e}"
+    fi
   done
+  echo "build_image_arg_all: ${build_image_arg_all}"
   echo -e   "### - - - - - - - - - - - - - - - - -\n"
-  
+
   if [[ ! -z ${BUILD_IMAGE_OPTS} ]]; then
     build_image_arg="${BUILD_IMAGE_OPTS}"
     echo "OPTS: ${BUILD_IMAGE_OPTS}"
   fi
-
+  build_image_arg="${build_image_arg} ${build_image_arg_all}"
   if [[ ! -z ${SOURCE_NAME} && ! -z $SOURCE_TAG} ]]; then
     build_image_arg="${build_image_arg} --build-arg SOURCE_IMAGE=${SOURCE_NAME}:${SOURCE_TAG}"
     echo "ARGS: ${build_image_arg}"
@@ -188,8 +192,7 @@ function image_build() {
   if [[ -z ${APP_VERSION} ]]; then
     build_image_tag="${main_dir}:${sub_dir}"
   else
-    echo "APP_VERSION3: $APP_VERSION"
-    build_image_arg="${build_image_arg} --build-arg APP_VERSION=${APP_VERSION}"
+    # build_image_arg="${build_image_arg} --build-arg APP_VERSION=${APP_VERSION}"
     build_image_tag="${main_dir}:${APP_VERSION}-${sub_dir}"
   fi
   
