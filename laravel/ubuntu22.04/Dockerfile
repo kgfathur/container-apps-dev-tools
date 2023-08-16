@@ -10,14 +10,14 @@ ARG WWW_ROOT="/usr/share/nginx/html" \
   NGINX_VERSION="1.22" \
   PHP_VERSION="8.1" \
   NODE_VERSION="18" \
-  LARAVEL_VERSION=8 
+  LARAVEL_VERSION="9"
 
 ENV NAME=laravel \
   APP_VERSION=$APP_VERSION \
-  NGINX_VERSION=${NGINX_VERSION} \
-  PHP_VERSION=${PHP_VERSION} \
+  NGINX_VERSION=$NGINX_VERSION \
+  PHP_VERSION=$PHP_VERSION \
   NODE_VERSION=$NODE_VERSION \
-  LARAVEL_VERSION=${LARAVEL_VERSION} \
+  LARAVEL_VERSION=$LARAVEL_VERSION \
   OS_NAME=ubuntu \
   OS_VERSION=22.04 \
   OS_CODENAME=jammy \
@@ -27,7 +27,7 @@ ENV NAME=laravel \
   APP_USER=$APP_USER \
   APP_USERID=$APP_USERID
 
-ENV SUMMARY="Laravel ${LARAVEL_VERSION}}} image with rootless priviledge based on and ${OS_NAME} ${OS_VERSION} (${OS_FULLNAME})" \
+ENV SUMMARY="Laravel ${LARAVEL_VERSION} image with rootless priviledge based on and ${OS_NAME} ${OS_VERSION} (${OS_FULLNAME})" \
   DESCRIPTION="Laravel is a free and open-source"
 
 LABEL maintainer="kgfathur" \

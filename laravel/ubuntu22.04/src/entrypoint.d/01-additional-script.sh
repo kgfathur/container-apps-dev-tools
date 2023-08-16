@@ -17,3 +17,6 @@ npm -v
 echo -e "\n## -- yarn Version"
 yarn --version
 
+echo "$(date +'%Y-%m-%d %H:%M:%S.%3N') | Running: php-fpm -D"
+php-fpm -D
+echo "$(date +'%Y-%m-%d %H:%M:%S.%3N') | 'php-fpm -D' exec code $?"
