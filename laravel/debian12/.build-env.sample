@@ -1,0 +1,9 @@
+#!/bin/bash
+# she-bang above are optional
+# but nice to have for syntax highlight
+SOURCE_NAME=debian
+SOURCE_TAG=bookworm-slim
+APP_VERSION=php8.2
+NGINX_VERSION=1.22
+PHP_VERSION=8.2
+NODE_VERSION=18
