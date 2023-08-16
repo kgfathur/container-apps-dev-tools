@@ -53,7 +53,7 @@ id $APP_USER
 
 echo "Setup: repo"
 apt-get update
-apt-get install -y --no-install-recommends curl ca-certificates gnupg2 ubuntu-keyring
+apt-get install -y --no-install-recommends curl ca-certificates gnupg2 debian-archive-keyring
 
 APT_KEYRING_PATH=/etc/apt/trusted.gpg.d/nginx-archive-keyring.gpg
 curl -s https://nginx.org/keys/nginx_signing.key | gpg  -v --yes --dearmor -o ${APT_KEYRING_PATH}
