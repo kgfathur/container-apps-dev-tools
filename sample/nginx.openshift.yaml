@@ -1,0 +1,112 @@
+### if your image registry require auth/login, need create pull secret
+# oc create secret generic docker-pull-secret \
+# --from-file=.dockerconfigjson=dockerconfig.json \
+# --type=kubernetes.io/dockerconfigjson --dry-run=client -o yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: docker-pull-secret
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: your-base64-encoded-dockerconfigjson-here-or-use-command-above
+---
+### Service account for deployment, either your your image registry need login or not
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: application-sa
+  namespace: testing
+
+### if your image registry require auth/login
+### after create docker-pull-secret and service account
+# oc secrets link application-sa docker-pull-secret --for=pull
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: use-nonroot-scc
+  namespace: testing
+rules:
+  - apiGroups:
+    - security.openshift.io
+    resources:
+    - securitycontextconstraints
+    resourceNames:
+    - nonroot
+    verbs:
+    - use
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: nonroot-scc-rbac
+  namespace: testing
+subjects:
+  - kind: ServiceAccount
+    name: application-sa
+roleRef:
+  kind: Role
+  name: use-nonroot-scc
+  apiGroup: rbac.authorization.k8s.io
+---
+### If you want to running simple Deployment or pod without any pull secret, service account or Security Context, just remove it
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      name: nginx
+      labels:
+        app: nginx
+    spec:
+      # remove the securityContext and serviceAccountName if not required
+      serviceAccountName: application-sa
+      securityContext:
+        runAsUser: 1000
+      # remove the imagePullSecrets if not required
+      imagePullSecrets:
+      - name: docker-pull-secret
+      containers:
+      - name: nginx
+        image: quay.io/kgfathur/nginx:1.22-ubuntu22.04
+        ports:
+          - containerPort: 8080
+        imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: nginx
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  ## if you need custom host 
+  # host: nginx.example.com
+  tls:
+    insecureEdgeTerminationPolicy: Allow
+    termination: edge
+  to:
+    kind: Service
+    name: nginx

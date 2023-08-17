@@ -1,0 +1,9 @@
+#!/bin/bash
+# she-bang above are optional
+# but nice to have for syntax highlight
+SOURCE_NAME=debian
+SOURCE_TAG=bullseye-slim
+APP_VERSION=php7.4
+NGINX_VERSION=1.22
+PHP_VERSION=7.4
+NODE_VERSION=18
