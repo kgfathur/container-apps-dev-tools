@@ -54,7 +54,7 @@ id $APP_USER
 
 echo "Setup: repo"
 apt-get update
-apt-get install -y --no-install-recommends curl ca-certificates gnupg2 ubuntu-keyring
+apt-get install -y --no-install-recommends curl ca-certificates gnupg2 ubuntu-keyring git unzip
 
 APT_KEYRING_PATH=/etc/apt/trusted.gpg.d/nginx-archive-keyring.gpg
 curl -s https://nginx.org/keys/nginx_signing.key | gpg  -v --yes --dearmor -o ${APT_KEYRING_PATH}
@@ -121,7 +121,7 @@ npm -v
 yarn --version
 composer --version
 
-apt-get remove --purge git unzip -y
+apt-get remove --purge git -y
 apt-get clean autoclean
 apt-get autoremove --yes
 dpkg -P --force-depends systemd systemd-timesyncd
